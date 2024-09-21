@@ -6,7 +6,7 @@ import re
 
 app = Flask(__name__)
 
-uri = "neo4j+s://5d2e5152.databases.neo4j.io:7687"  
+uri = "bolt://5d2e5152.databases.neo4j.io:7687"  
 username = "neo4j"  
 password = "VkxKaiVosysOVAJALSxysXmeFDl63Lr7_i5WwDTkRow"  
 driver = GraphDatabase.driver(uri, auth=(username, password))
@@ -70,15 +70,19 @@ def insert_article(tx, title, authors, publication_year, keywords):
                "CREATE (au)-[:WROTE]->(a)", title=title, name=author)
 
 def insert_articles(articles, keywords):
-    with driver.session() as session:
-        for article in articles:
-            session.write_transaction(
-                insert_article, 
-                article['title'], 
-                article['authors'], 
-                article['publication_year'], 
-                keywords  
-            )
+    try:
+        with driver.session() as session:
+            for article in articles:
+                session.write_transaction(
+                    insert_article, 
+                    article['title'], 
+                    article['authors'], 
+                    article['publication_year'], 
+                    keywords
+                )
+        print("Artigos inseridos com sucesso!")
+    except Exception as e:
+        print(f"Erro ao inserir no banco de dados: {str(e)}")
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
