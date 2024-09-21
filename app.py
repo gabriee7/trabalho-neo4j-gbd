@@ -6,10 +6,17 @@ import re
 
 app = Flask(__name__)
 
-uri = "bolt://5d2e5152.databases.neo4j.io:7687"  
-username = "neo4j"  
-password = "VkxKaiVosysOVAJALSxysXmeFDl63Lr7_i5WwDTkRow"  
+uri = "neo4j+s://5d2e5152.databases.neo4j.io:7687"  
+username = "neo4j"
+password = "VkxKaiVosysOVAJALSxysXmeFDl63Lr7_i5WwDTkRow"
 driver = GraphDatabase.driver(uri, auth=(username, password))
+
+try:
+    driver = GraphDatabase.driver(uri, auth=(username, password))
+    driver.verify_connectivity()
+    print("Connection established.")
+except Exception as e:
+    print(f"Failed to connect to Neo4j: {e}")
 
 @app.route('/')
 def index():
