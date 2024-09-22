@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+import os
 from flask import Flask, render_template, request, redirect, url_for
 from neo4j import GraphDatabase
 from bs4 import BeautifulSoup
@@ -6,17 +8,15 @@ import re
 
 app = Flask(__name__)
 
-uri = "neo4j+s://5d2e5152.databases.neo4j.io:7687"  
-username = "neo4j"
-password = "VkxKaiVosysOVAJALSxysXmeFDl63Lr7_i5WwDTkRow"
+load_dotenv()
+uri = os.getenv("NEO4J_URI")
+username = os.getenv("NEO4J_USERNAME")
+password = os.getenv("NEO4J_PASSWORD")
 driver = GraphDatabase.driver(uri, auth=(username, password))
 
-try:
-    driver = GraphDatabase.driver(uri, auth=(username, password))
-    driver.verify_connectivity()
-    print("Connection established.")
-except Exception as e:
-    print(f"Failed to connect to Neo4j: {e}")
+with driver.session() as session:
+    result = session.run("RETURN 1")
+    print(f"Conexão com o Neo4j: {result.single()}") 
 
 @app.route('/')
 def index():
@@ -77,19 +77,15 @@ def insert_article(tx, title, authors, publication_year, keywords):
                "CREATE (au)-[:WROTE]->(a)", title=title, name=author)
 
 def insert_articles(articles, keywords):
-    try:
-        with driver.session() as session:
-            for article in articles:
-                session.write_transaction(
-                    insert_article, 
-                    article['title'], 
-                    article['authors'], 
-                    article['publication_year'], 
-                    keywords
-                )
-        print("Artigos inseridos com sucesso!")
-    except Exception as e:
-        print(f"Erro ao inserir no banco de dados: {str(e)}")
+    with driver.session() as session:
+        for article in articles:
+            session.write_transaction(
+                insert_article, 
+                article['title'], 
+                article['authors'], 
+                article['publication_year'], 
+                keywords  
+            )
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
